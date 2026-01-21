@@ -1,0 +1,7 @@
+{
+  "name": "Nikawewa Teachers Management System",
+  "description": "A comprehensive school management system for A/Nikawewa Muslim Vidyalaya featuring role-based access, leave management, student tracking, and reporting.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
