@@ -8,6 +8,7 @@ interface ClassManagementProps {
 }
 
 const ClassManagement: React.FC<ClassManagementProps> = ({ user }) => {
+  // Correctly passing teacherId to storageService
   const [students, setStudents] = useState<Student[]>(storageService.getStudents(user.id));
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
@@ -15,14 +16,19 @@ const ClassManagement: React.FC<ClassManagementProps> = ({ user }) => {
   const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    // Updated student object to satisfy required fields and fix 'name' property error
     const newStudent: Student = {
       id: editingStudent?.id || Math.random().toString(36).substr(2, 9),
-      name: formData.get('name') as string,
+      indexNo: editingStudent?.indexNo || 'N/A',
+      nameWithInitials: formData.get('name') as string,
+      fullName: editingStudent?.fullName || formData.get('name') as string,
+      dob: editingStudent?.dob || '2000-01-01',
       grade: formData.get('grade') as string,
       class: formData.get('class') as string,
       teacherId: user.id
     };
     storageService.saveStudent(newStudent);
+    // Correctly passing teacherId to storageService
     setStudents(storageService.getStudents(user.id));
     setIsModalOpen(false);
     setEditingStudent(null);
@@ -57,7 +63,7 @@ const ClassManagement: React.FC<ClassManagementProps> = ({ user }) => {
             {students.map(s => (
               <tr key={s.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 text-sm font-mono text-gray-500 uppercase">#{s.id.substring(0, 5)}</td>
-                <td className="px-6 py-4 font-bold text-gray-800">{s.name}</td>
+                <td className="px-6 py-4 font-bold text-gray-800">{s.nameWithInitials}</td>
                 <td className="px-6 py-4 text-sm text-gray-600">{s.grade}-{s.class}</td>
                 <td className="px-6 py-4 text-right">
                   <button 
@@ -87,12 +93,12 @@ const ClassManagement: React.FC<ClassManagementProps> = ({ user }) => {
              <form onSubmit={handleSave} className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                  <input name="name" required defaultValue={editingStudent?.name} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
+                  <input name="name" required defaultValue={editingStudent?.nameWithInitials} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Grade</label>
-                    <input name="grade" required defaultValue={editingStudent?.grade || user.assignedClass.split(' ')[1].split('-')[0]} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
+                    <input name="grade" required defaultValue={editingStudent?.grade || user.assignedClass.split(' ')[1]?.split('-')[0]} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
