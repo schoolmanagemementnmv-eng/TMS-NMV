@@ -1,5 +1,5 @@
 
-import { User, UserRole, LeaveRequest, LeaveStatus, LeaveType, SchoolProfile, NewsItem, Student, Exam, Subject, ExamResult, SubjectResult } from '../types';
+import { User, UserRole, LeaveRequest, LeaveStatus, LeaveType, SchoolProfile, NewsItem, Student, Exam, Subject, ExamResult, SubjectResult, SchoolStats, GradeStats } from '../types';
 
 const STORAGE_KEYS = {
   USERS: 'tms_users',
@@ -9,7 +9,8 @@ const STORAGE_KEYS = {
   STUDENTS: 'tms_students',
   EXAMS: 'tms_exams',
   SUBJECTS: 'tms_subjects',
-  RESULTS: 'tms_results'
+  RESULTS: 'tms_results',
+  STATS: 'tms_stats'
 };
 
 export const storageService = {
@@ -35,41 +36,62 @@ export const storageService = {
         name: "A/Nikawewa Muslim Vidyalaya",
         fullName: "NCP/AP/KB/HP/ NIKAWEWA MUSLIM VIDYALAYA",
         address: "Nikawewa, Anuradhapura, Sri Lanka",
-        academicYear: "2024",
+        academicYear: "2026",
         contactNo: "0779006871",
         email: "NIKAWEWAMVSCHOOL2@GMAIL.COM",
-        logoUrl: "https://via.placeholder.com/150?text=Logo",
-        termDates: { term1: "", term2: "", term3: "" }
+        logoUrl: "https://i.ibb.co/Xkh0f6Bv/logo-A-N-M-V.jpg",
+        establishmentDate: "1961-01-01",
+        censusNo: "19519",
+        principalName: "N.M. ASARUDEEN (SLTS)",
+        educationalDistrict: "Anuradhapura",
+        schoolZone: "Horowpothana",
+        nearestSchool: "Nikawewa Sinhala Vidyalaya",
+        district: "Anuradhapura",
+        province: "North Central",
+        divisionalSecretariat: "Horowpothana",
+        gnDivision: "Nikawewa",
+        electoralDistrict: "Anuradhapura",
+        policeStation: "Horowpothana",
+        postOffice: "Nikawewa",
+        telegraphicOffice: "Horowpothana",
+        hospital: "Horowpothana",
+        bank: "People's Bank",
+        coordinates: "8.6123° N, 80.8542° E",
+        termDates: { term1: "2026-02-19", term2: "2026-06-10", term3: "2026-09-02" }
       }));
       localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.EXAMS, JSON.stringify([
-        { id: 'exam1', title: '1st Term Evaluation', year: '2024', term: '1' }
+        { id: 'exam1', title: '1st Term Evaluation', year: '2026', term: '1' }
       ]));
       
-      // Initialize Curriculum
       const curriculum: any[] = [
-        // Grade 6-9 Subjects (14)
         ...['Tamil', 'Islam', 'English', 'Maths', 'Science', 'History', 'Geography', 'Civics', 'S. Sinhala', 'H. Science', 'PTS', 'Arabic', 'Art', 'ICT']
         .map(name => ({ id: `s69_${name}`, name, grade: '6-9', category: 'Core' })),
         
-        // Grade 10-11 Core (6)
         ...['Tamil', 'Islam', 'English', 'Maths', 'Science', 'History']
         .map(name => ({ id: `s1011_${name}`, name, grade: '10-11', category: 'Core' })),
         
-        // Category 1
         ...['Business & Accounting Studies', 'Geography', 'Civic Education', 'Entrepreneurship Studies', 'Second Language (Sinhala)']
         .map(name => ({ id: `c1_${name}`, name, grade: '10-11', category: 'Category 1' })),
         
-        // Category 2
         ...['Appreciation of Tamil Literary Texts', 'Appreciation of Arabic Literary Texts', 'Art']
         .map(name => ({ id: `c2_${name}`, name, grade: '10-11', category: 'Category 2' })),
         
-        // Category 3
         ...['Information & Communication Technology', 'Agriculture & Food Technology', 'Home Economics', 'Health & Physical Education']
         .map(name => ({ id: `c3_${name}`, name, grade: '10-11', category: 'Category 3' })),
       ];
       localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(curriculum));
       localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify([]));
+
+      const initialGradeData: GradeStats[] = [];
+      for (let i = 1; i <= 11; i++) {
+        initialGradeData.push({ grade: String(i), boys: 0, girls: 0 });
+      }
+      localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify({
+        lastUpdated: new Date().toISOString(),
+        teacherCount: 1,
+        gradeData: initialGradeData
+      }));
     }
   },
 
@@ -135,7 +157,7 @@ export const storageService = {
   saveSubject(subject: Subject) {
     const subs = this.getSubjects();
     const i = subs.findIndex(s => s.id === subject.id);
-    if (i > -1) subs[i] = subject; else subs.push(subject);
+    if (i > -1) subs[i] = subject; else subs.push(subs);
     localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(subs));
   },
 
@@ -153,8 +175,8 @@ export const storageService = {
   },
 
   saveResult(result: ExamResult) {
-    const results = this.getResults();
-    const index = results.findIndex(r => r.id === result.id || (r.studentId === result.studentId && r.examId === result.examId));
+    const results = JSON.parse(localStorage.getItem(STORAGE_KEYS.RESULTS) || '[]');
+    const index = results.findIndex((r: any) => r.id === result.id || (r.studentId === result.studentId && r.examId === result.examId));
     
     result.results = result.results.map(r => ({
       ...r,
@@ -164,39 +186,33 @@ export const storageService = {
     result.totalMarks = result.results.reduce((acc, curr) => acc + (Number(curr.marks) || 0), 0);
     result.average = result.results.length > 0 ? result.totalMarks / result.results.length : 0;
 
-    if (index > -1) results[index] = result; else results.push(result);
-    localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(results));
-    this.processRanks(result.examId);
-  },
-
-  processRanks(examId: string) {
-    const results = this.getResults();
-    const students = this.getStudents();
-    const examResults = results.filter(r => r.examId === examId);
-
-    const grades = [...new Set(students.map(s => s.grade))];
-    grades.forEach(grade => {
-      const studentIdsInGrade = students.filter(s => s.grade === grade).map(s => s.id);
-      const gradeResults = examResults.filter(r => studentIdsInGrade.includes(r.studentId));
-      
-      gradeResults.sort((a, b) => b.average - a.average);
-      gradeResults.forEach((res, idx) => {
-        const globalIdx = results.findIndex(r => r.id === res.id);
-        if (globalIdx > -1) results[globalIdx].gradeRank = idx + 1;
-      });
-
-      const classesInGrade = [...new Set(students.filter(s => s.grade === grade).map(s => s.class))];
-      classesInGrade.forEach(cls => {
-        const studentIdsInClass = students.filter(s => s.grade === grade && s.class === cls).map(s => s.id);
-        const classResults = examResults.filter(r => studentIdsInClass.includes(r.studentId));
-        classResults.sort((a, b) => b.average - a.average);
-        classResults.forEach((res, idx) => {
-          const globalIdx = results.findIndex(r => r.id === res.id);
-          if (globalIdx > -1) results[globalIdx].classRank = idx + 1;
-        });
-      });
+    const currentExamResults = results.filter((r: any) => r.examId === result.examId && r.id !== result.id);
+    const allForRank = [...currentExamResults, result].sort((a, b) => b.average - a.average);
+    
+    allForRank.forEach((res, idx) => {
+      res.classRank = idx + 1;
     });
 
+    if (index > -1) results[index] = result; else results.push(result);
     localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(results));
+  },
+
+  getSchoolStats(): SchoolStats {
+    const stats = JSON.parse(localStorage.getItem(STORAGE_KEYS.STATS) || '{}');
+    if (!stats.gradeData) {
+      const initialGradeData: GradeStats[] = [];
+      for (let i = 1; i <= 11; i++) {
+        initialGradeData.push({ grade: String(i), boys: 0, girls: 0 });
+      }
+      return { lastUpdated: new Date().toISOString(), teacherCount: 1, gradeData: initialGradeData };
+    }
+    return stats;
+  },
+  
+  saveSchoolStats(stats: SchoolStats) {
+    localStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify({
+      ...stats,
+      lastUpdated: new Date().toISOString()
+    }));
   }
 };

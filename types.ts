@@ -182,3 +182,16 @@ export interface ExamResult {
   classRank?: number;
   gradeRank?: number;
 }
+
+// --- NEW STATISTICS MODULE TYPES ---
+export interface GradeStats {
+  grade: string;
+  boys: number;
+  girls: number;
+}
+
+export interface SchoolStats {
+  lastUpdated: string;
+  teacherCount: number;
+  gradeData: GradeStats[];
+}

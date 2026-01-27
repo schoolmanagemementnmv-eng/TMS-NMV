@@ -30,5 +30,29 @@ export const geminiService = {
       console.error("Gemini Rpc Error:", error);
       return "AI analysis is temporarily unavailable due to a service error.";
     }
+  },
+
+  async generateAcademicClassReport(classInfo: string, resultsSummary: string) {
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-pro-preview',
+        contents: `Generate a Professional Academic Class Performance Audit Report for A/Nikawewa Muslim Vidyalaya.
+        Class: ${classInfo}
+        Results Data Summary: ${resultsSummary}
+        
+        The report should be structured with:
+        1. Executive Summary
+        2. Academic Achievement Analysis (Subject-wise strengths/weaknesses)
+        3. Competency Distribution Insights
+        4. Recommendations for Instructional Improvement
+        
+        Use formal academic language, bullet points for clarity, and a concise yet authoritative tone.`,
+      });
+      return response.text;
+    } catch (error) {
+      console.error("Gemini Rpc Error:", error);
+      return null;
+    }
   }
 };
