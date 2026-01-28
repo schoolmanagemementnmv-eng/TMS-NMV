@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { storageService } from '../services/storageService';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { LeaveStatus } from '../types';
@@ -9,6 +9,7 @@ const AdminDashboard: React.FC = () => {
   const leaves = storageService.getLeaves();
   const news = storageService.getNews();
   const stats = storageService.getSchoolStats();
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const totalStudents = useMemo(() => {
     return stats.gradeData.reduce((acc, g) => acc + g.boys + g.girls, 0);
@@ -30,6 +31,22 @@ const AdminDashboard: React.FC = () => {
     });
     return Object.entries(types).map(([name, value]) => ({ name, value }));
   }, [leaves]);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(err => {
+        alert(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false));
+    }
+  };
+
+  const handleManualReload = () => {
+    if (confirm("Are you sure you want to reload the application? Unsaved temporary states may be lost.")) {
+      window.location.reload();
+    }
+  };
 
   const COLORS = ['#059669', '#3b82f6', '#f59e0b', '#ef4444'];
 
@@ -61,9 +78,9 @@ const AdminDashboard: React.FC = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Enrollment Snapshot Widget */}
-        <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 ring-1 ring-gray-50 flex flex-col">
+        <div className="lg:col-span-2 bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 ring-1 ring-gray-50 flex flex-col">
            <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-black text-gray-800 uppercase tracking-tight">Enrollment Snapshot</h3>
               <a href="#/stats" className="text-[10px] font-black text-emerald-600 uppercase tracking-widest hover:underline">View Analytics</a>
@@ -85,26 +102,58 @@ const AdminDashboard: React.FC = () => {
            </div>
         </div>
 
-        {/* Leave Trends */}
-        <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 ring-1 ring-gray-50">
-          <h3 className="text-lg font-black text-gray-800 mb-6 uppercase tracking-tight">Leave Distribution</h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="name" fontSize={10} fontStyle="bold" axisLine={false} tickLine={false} />
-                <YAxis axisLine={false} tickLine={false} />
-                <Tooltip 
-                   contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.1)' }}
-                />
-                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                   {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        {/* System Operations Card */}
+        <div className="bg-emerald-950 p-8 rounded-[40px] shadow-2xl shadow-emerald-900/20 text-white flex flex-col justify-between">
+           <div>
+              <h3 className="text-lg font-black text-emerald-400 uppercase tracking-tight mb-2">System Operations</h3>
+              <p className="text-emerald-100/60 text-xs font-medium italic mb-8">Override browser UI restrictions directly from the portal.</p>
+           </div>
+           
+           <div className="space-y-4">
+              <button 
+                onClick={toggleFullscreen}
+                className="w-full flex items-center justify-between px-6 py-4 bg-emerald-900/50 hover:bg-emerald-900 rounded-2xl border border-emerald-800 transition-all group"
+              >
+                <span className="text-xs font-black uppercase tracking-widest">Toggle Fullscreen</span>
+                <span className="text-xl group-hover:scale-125 transition-transform">{isFullscreen ? '🗗' : '🗖'}</span>
+              </button>
+              
+              <button 
+                onClick={handleManualReload}
+                className="w-full flex items-center justify-between px-6 py-4 bg-emerald-900/50 hover:bg-emerald-900 rounded-2xl border border-emerald-800 transition-all group"
+              >
+                <span className="text-xs font-black uppercase tracking-widest">Force App Reload</span>
+                <span className="text-xl group-hover:rotate-180 transition-transform duration-500">🔄</span>
+              </button>
+
+              <div className="mt-4 p-4 bg-emerald-900/30 rounded-2xl border border-emerald-800/30">
+                 <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest leading-relaxed">
+                    Developer Note: If platform controls are disabled, use these internal triggers to manage your view.
+                 </p>
+              </div>
+           </div>
+        </div>
+      </div>
+
+      {/* Leave Trends */}
+      <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 ring-1 ring-gray-50">
+        <h3 className="text-lg font-black text-gray-800 mb-6 uppercase tracking-tight">Leave Distribution Analysis</h3>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+              <XAxis dataKey="name" fontSize={10} fontStyle="bold" axisLine={false} tickLine={false} />
+              <YAxis axisLine={false} tickLine={false} />
+              <Tooltip 
+                 contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.1)' }}
+              />
+              <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                 {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>

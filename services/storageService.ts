@@ -102,6 +102,10 @@ export const storageService = {
     if (index > -1) users[index] = user; else users.push(user);
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
   },
+  deleteUser(id: string) {
+    const users = this.getUsers().filter(u => u.id !== id);
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+  },
 
   getLeaves(): LeaveRequest[] { return JSON.parse(localStorage.getItem(STORAGE_KEYS.LEAVES) || '[]'); },
   addLeave(leave: any) {

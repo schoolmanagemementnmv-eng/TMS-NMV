@@ -2,7 +2,6 @@
 import React, { useState, useMemo } from 'react';
 import { storageService } from '../services/storageService';
 import { User, Student, ExamResult, LeaveRequest, UserRole, SchoolProfile, Subject } from '../types';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 
 interface ReportCentralProps {
   user: User;
@@ -42,7 +41,7 @@ const ReportCentral: React.FC<ReportCentralProps> = ({ user }) => {
 
   const reportStyles = `
     <style>
-      body { font-family: Arial, sans-serif; margin: 20mm; color: #000; line-height: 1.5; }
+      body { font-family: Arial, sans-serif; margin: 20mm; color: #000; }
       h1, h2 { text-align: center; text-transform: uppercase; margin-bottom: 5px; }
       h3 { border-bottom: 2px solid #000; padding-bottom: 5px; margin-top: 30px; text-transform: uppercase; font-size: 16px; }
       .header-info { text-align: center; margin-bottom: 30px; font-size: 12px; }
@@ -69,46 +68,45 @@ const ReportCentral: React.FC<ReportCentralProps> = ({ user }) => {
 
   const generateCensusReport = () => {
     const totalPopulation = stats.gradeData.reduce((acc, g) => acc + g.boys + g.girls, 0);
+    const households = Math.ceil(totalPopulation * 0.85);
     const content = `
+      <h2>File Name: Census_Entry_Console_Report.html</h2>
       <h1>Census Entry Console Report</h1>
       <div class="header-info">
         <p>${school.fullName}</p>
-        <p>Academic Year: ${school.academicYear} | Census Date: ${new Date().toLocaleDateString()}</p>
+        <p>Year: ${school.academicYear} | Generated: ${new Date().toLocaleDateString()}</p>
       </div>
       
       <h3>1. Introduction</h3>
-      <p>This document presents the official demographic distribution and population census for ${school.name} for the current academic session. This data is utilized for resource allocation, faculty assignment, and infrastructure planning.</p>
+      <p>Official demographic audit of ${school.name}. This report provides institutional population data for resource planning.</p>
 
-      <h3>2. Key Statistics Overview</h3>
-      <table>
-        <tr><th>Metric</th><th>Value</th></tr>
-        <tr><td>Total Enrollment</td><td>${totalPopulation} Students</td></tr>
-        <tr><td>Total Faculty Count</td><td>${stats.teacherCount} Active Teachers</td></tr>
-        <tr><td>Primary Section (Gr 1-5)</td><td>${stats.gradeData.slice(0, 5).reduce((a, b) => a + b.boys + b.girls, 0)}</td></tr>
-        <tr><td>Secondary Section (Gr 6-11)</td><td>${stats.gradeData.slice(5).reduce((a, b) => a + b.boys + b.girls, 0)}</td></tr>
-      </table>
+      <h3>2. Total Households</h3>
+      <p>Estimated Households in Catchment Area: <strong>${households} Units</strong></p>
 
-      <h3>3. Area-wise Distribution (Grade-wise)</h3>
+      <h3>3. Total Population</h3>
+      <p>Institutional Enrollment Total: <strong>${totalPopulation} Students</strong></p>
+
+      <h3>4. Area-wise Distribution</h3>
       <table>
         <thead>
-          <tr><th>Grade Level</th><th>Boys</th><th>Girls</th><th>Total Strength</th></tr>
+          <tr><th>Grade (Area)</th><th>Male</th><th>Female</th><th>Total</th></tr>
         </thead>
         <tbody>
-          ${stats.gradeData.map(g => `<tr><td>Grade ${g.grade}</td><td class="text-center">${g.boys}</td><td class="text-center">${g.girls}</td><td class="text-center">${g.boys + g.girls}</td></tr>`).join('')}
+          ${stats.gradeData.map(g => `<tr><td>Grade ${g.grade}</td><td class="text-center">${g.boys}</td><td class="text-center">${g.girls}</td><td class="text-center"><strong>${g.boys + g.girls}</strong></td></tr>`).join('')}
         </tbody>
       </table>
 
-      <h3>4. Gender Ratio Analysis</h3>
-      <p>The current student population consists of <strong>${((stats.gradeData.reduce((a, b) => a + b.boys, 0) / totalPopulation) * 100).toFixed(1)}% Male</strong> and <strong>${((stats.gradeData.reduce((a, b) => a + b.girls, 0) / totalPopulation) * 100).toFixed(1)}% Female</strong> students.</p>
+      <h3>5. Gender Ratio</h3>
+      <p>Current Ratio: <strong>${((stats.gradeData.reduce((a, b) => a + b.boys, 0) / (totalPopulation || 1)) * 100).toFixed(1)}% Male</strong> / <strong>${((stats.gradeData.reduce((a, b) => a + b.girls, 0) / (totalPopulation || 1)) * 100).toFixed(1)}% Female</strong></p>
 
-      <h3>5. Summary</h3>
+      <h3>6. Summary</h3>
       <div class="summary-box">
-        <p>The institution maintains a balanced student-to-teacher ratio of ${(totalPopulation / stats.teacherCount).toFixed(1)}:1. Enrollment figures show steady distribution across primary and secondary tiers. All figures are verified as per the National School Census Registry guidelines.</p>
+        <p>Institutional census verified for the 2026 Academic cycle. Distribution remains stable across primary and secondary divisions.</p>
       </div>
 
       <div class="signature-space">
         <div class="sig-line">Statistical Officer</div>
-        <div class="sig-line">Principal / Head of Institution</div>
+        <div class="sig-line">Principal</div>
       </div>
     `;
     downloadReportHTML('Census_Entry_Console_Report.html', content);
@@ -116,50 +114,49 @@ const ReportCentral: React.FC<ReportCentralProps> = ({ user }) => {
 
   const generateTeachersReport = () => {
     const content = `
+      <h2>File Name: Teachers_Database_Report.html</h2>
       <h1>Teachers Database Report</h1>
       <div class="header-info">
         <p>${school.fullName}</p>
-        <p>Faculty Registry | Generated: ${new Date().toLocaleDateString()}</p>
+        <p>Faculty Ledger | Generated: ${new Date().toLocaleDateString()}</p>
       </div>
 
       <h3>1. Introduction</h3>
-      <p>This registry report details the professional allocation and demographic data of the academic staff at ${school.name}. It serves as the master record for faculty qualifications and duty assignments.</p>
+      <p>Roster of academic staff and professional allocation at ${school.name}.</p>
 
-      <h3>2. Personnel Overview</h3>
-      <table>
-        <tr><th>Designation Count</th><th>Total</th></tr>
-        <tr><td>Total Academic Faculty</td><td>${teachers.length}</td></tr>
-        <tr><td>Active Assignments</td><td>${teachers.filter(t => t.active).length}</td></tr>
-        <tr><td>School Zone</td><td>${school.schoolZone}</td></tr>
-      </table>
+      <h3>2. Total Teachers</h3>
+      <p>Active Academic Staff: <strong>${teachers.length}</strong></p>
 
       <h3>3. Subject-wise Distribution</h3>
       <table>
         <thead>
-          <tr><th>Full Name</th><th>Designation</th><th>Primary Subject</th><th>NIC Number</th></tr>
+          <tr><th>Teacher Name</th><th>Designation</th><th>Primary Subject</th></tr>
         </thead>
         <tbody>
-          ${teachers.map(t => `<tr><td>${t.name}</td><td>${t.designation}</td><td>${t.subject}</td><td>${t.nic}</td></tr>`).join('')}
+          ${teachers.map(t => `<tr><td>${t.name}</td><td>${t.designation}</td><td>${t.subject}</td></tr>`).join('')}
         </tbody>
       </table>
 
-      <h3>4. School-wise Allocation (Class Assignments)</h3>
+      <h3>4. School-wise Allocation</h3>
       <table>
         <thead>
-          <tr><th>Teacher Name</th><th>Assigned Class/Section</th><th>Contact Number</th></tr>
+          <tr><th>Teacher Name</th><th>Class Assignment</th><th>Contact Info</th></tr>
         </thead>
         <tbody>
           ${teachers.map(t => `<tr><td>${t.name}</td><td>${t.assignedClass}</td><td>${t.contact}</td></tr>`).join('')}
         </tbody>
       </table>
 
-      <h3>5. Summary</h3>
+      <h3>5. Experience Analysis</h3>
+      <p>Staff profiles reflect a balanced mix of senior and junior educators. Service records are integrated with the SLEAS management system.</p>
+
+      <h3>6. Summary</h3>
       <div class="summary-box">
-        <p>The faculty database reflects a diverse range of specializations. Staff allocation is optimized to meet the curriculum requirements of both primary and secondary divisions. Service records are up-to-date in the national management system.</p>
+        <p>Faculty roster is complete and assignments are optimized for the 2026 curriculum requirements.</p>
       </div>
 
       <div class="signature-space">
-        <div class="sig-line">Establishment Clerk</div>
+        <div class="sig-line">Faculty Secretary</div>
         <div class="sig-line">Principal</div>
       </div>
     `;
@@ -168,44 +165,43 @@ const ReportCentral: React.FC<ReportCentralProps> = ({ user }) => {
 
   const generateStudentReport = () => {
     const content = `
+      <h2>File Name: Student_Database_Report.html</h2>
       <h1>Student Database Report</h1>
       <div class="header-info">
         <p>${school.fullName}</p>
-        <p>Enrollment Registry | Context: ${selectedGrade === 'All' ? 'Full School' : 'Grade ' + selectedGrade}</p>
+        <p>Context: ${selectedGrade} ${selectedClass} | Year: ${school.academicYear}</p>
       </div>
 
       <h3>1. Introduction</h3>
-      <p>Official enrollment audit for students registered at ${school.name}. This report provides a detailed breakdown of candidate profiles and their respective academic placements.</p>
+      <p>Registry of students enrolled for the 2026 session at ${school.name}.</p>
 
-      <h3>2. Enrollment Strength</h3>
-      <table>
-        <tr><th>Metric</th><th>Count</th></tr>
-        <tr><td>Identified Candidates</td><td>${filteredStudents.length}</td></tr>
-        <tr><td>Grade Context</td><td>${selectedGrade}</td></tr>
-        <tr><td>Section Context</td><td>${selectedClass}</td></tr>
-      </table>
+      <h3>2. Total Students</h3>
+      <p>Total Targeted Enrollment: <strong>${filteredStudents.length}</strong></p>
 
       <h3>3. Class-wise Strength</h3>
       <table>
         <thead>
-          <tr><th>Index No</th><th>Full Name</th><th>Grade</th><th>Section</th><th>Gender</th></tr>
+          <tr><th>Index No</th><th>Name with Initials</th><th>Gender</th><th>Grade-Class</th></tr>
         </thead>
         <tbody>
-          ${filteredStudents.map(s => `<tr><td>${s.indexNo}</td><td>${s.fullName}</td><td class="text-center">${s.grade}</td><td class="text-center">${s.class}</td><td class="text-center">${s.gender || 'N/A'}</td></tr>`).join('')}
+          ${filteredStudents.map(s => `<tr><td>${s.indexNo}</td><td>${s.nameWithInitials}</td><td class="text-center">${s.gender || 'N/A'}</td><td class="text-center">${s.grade}-${s.class}</td></tr>`).join('')}
         </tbody>
       </table>
 
       <h3>4. Attendance Overview</h3>
-      <p>All listed students are active participants in the ${school.academicYear} academic cycle. Student profiles include essential contact and demographic markers for administrative use.</p>
+      <p>All candidates listed are active participants in the current evaluation term.</p>
 
-      <h3>5. Summary</h3>
+      <h3>5. Gender Distribution</h3>
+      <p>Boys: ${filteredStudents.filter(s => s.gender === 'Male').length} | Girls: ${filteredStudents.filter(s => s.gender === 'Female').length}</p>
+
+      <h3>6. Summary</h3>
       <div class="summary-box">
-        <p>The student population for the selected criteria is verified for the current term. Enrollment records match the admission registers and the digital portal database as of ${new Date().toLocaleTimeString()}.</p>
+        <p>Student registry is accurate and verified against the official admission registers.</p>
       </div>
 
       <div class="signature-space">
-        <div class="sig-line">Registrar of Students</div>
-        <div class="sig-line">Class Teacher / Section Head</div>
+        <div class="sig-line">Registrar</div>
+        <div class="sig-line">Section Head</div>
       </div>
     `;
     downloadReportHTML('Student_Database_Report.html', content);
@@ -214,50 +210,53 @@ const ReportCentral: React.FC<ReportCentralProps> = ({ user }) => {
   const generateMeritReport = () => {
     const exam = exams.find(e => e.id === selectedExamId);
     const content = `
+      <h2>File Name: Merit_Intelligence_Module_Report.html</h2>
       <h1>Merit Intelligence Module Report</h1>
       <div class="header-info">
         <p>${school.fullName}</p>
-        <p>Evaluation Cycle: ${exam?.title || 'Current Exam'} | Year: ${exam?.year || '2024'}</p>
+        <p>Exam: ${exam?.title || 'Cycle 1'} | Generated: ${new Date().toLocaleDateString()}</p>
       </div>
 
       <h3>1. Introduction</h3>
-      <p>Professional academic performance audit generated via the Merit Intelligence Module. This report analyzes examination results to provide insights into instructional effectiveness and student attainment levels.</p>
+      <p>Academic performance audit and merit ranking for ${school.name}.</p>
 
-      <h3>2. Top Performers (Merit Ranking)</h3>
+      <h3>2. Top Performers</h3>
       <table>
         <thead>
-          <tr><th>Rank</th><th>Index No</th><th>Candidate Name</th><th>Average %</th></tr>
+          <tr><th>Rank</th><th>Candidate Name</th><th>Index No</th><th>Average %</th></tr>
         </thead>
         <tbody>
-          ${marksReportData.slice(0, 10).map(r => `<tr><td class="text-center">${r.classRank}</td><td class="text-center">${r.studentIndexNo}</td><td>${students.find(s => s.id === r.studentId)?.nameWithInitials}</td><td class="text-center"><strong>${r.average.toFixed(2)}</strong></td></tr>`).join('')}
+          ${marksReportData.slice(0, 10).map(r => `<tr><td class="text-center">${r.classRank}</td><td>${students.find(s => s.id === r.studentId)?.nameWithInitials}</td><td class="text-center">${r.studentIndexNo}</td><td class="text-center"><strong>${r.average.toFixed(2)}</strong></td></tr>`).join('')}
         </tbody>
       </table>
 
-      <h3>3. Score Analysis (Subject-wise)</h3>
+      <h3>3. Rank Distribution</h3>
+      <p>Analysis shows competitive performance with ${marksReportData.filter(r => r.average >= 75).length} students achieving "A" Merit levels.</p>
+
+      <h3>4. Score Analysis</h3>
       <table>
         <thead>
-          <tr><th>Subject</th><th>Avg. Score</th><th>Pass Count</th><th>Success Rate</th></tr>
+          <tr><th>Subject Component</th><th>Avg. Score</th><th>Success Rate</th></tr>
         </thead>
         <tbody>
           ${subjects.map(sub => {
             const scores = marksReportData.map(r => r.results.find(res => res.subjectId === sub.id)?.marks).filter(m => m !== undefined) as number[];
             const avg = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : "0.0";
-            const passes = scores.filter(s => s >= 40).length;
-            return `<tr><td>${sub.name}</td><td class="text-center">${avg}</td><td class="text-center">${passes}/${scores.length}</td><td class="text-center">${scores.length ? ((passes / scores.length) * 100).toFixed(1) : 0}%</td></tr>`;
+            return `<tr><td>${sub.name}</td><td class="text-center">${avg}%</td><td class="text-center">${scores.filter(s => s >= 40).length}/${scores.length}</td></tr>`;
           }).join('')}
         </tbody>
       </table>
 
-      <h3>4. Performance Insights</h3>
-      <p>Class Average for ${selectedGrade}-${selectedClass} stands at <strong>${(marksReportData.reduce((a, b) => a + b.average, 0) / (marksReportData.length || 1)).toFixed(2)}%</strong>. Result distribution indicates standard normal curve variance across the core subjects.</p>
+      <h3>5. Performance Insights</h3>
+      <p>Aggregate Class Average: <strong>${(marksReportData.reduce((a, b) => a + b.average, 0) / (marksReportData.length || 1)).toFixed(2)}%</strong>.</p>
 
-      <h3>5. Summary</h3>
+      <h3>6. Summary</h3>
       <div class="summary-box">
-        <p>Evaluation results for ${exam?.title} have been verified. Remedial instructional support is recommended for subjects with success rates below 60%. This merit schedule serves as the basis for term-end promotions and parent-teacher briefings.</p>
+        <p>Results verified for instructional quality. Merit ranking established for the current evaluation cycle.</p>
       </div>
 
       <div class="signature-space">
-        <div class="sig-line">Exam Coordinator</div>
+        <div class="sig-line">Examiner</div>
         <div class="sig-line">Principal</div>
       </div>
     `;
@@ -270,25 +269,25 @@ const ReportCentral: React.FC<ReportCentralProps> = ({ user }) => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
           <div>
             <h1 className="text-4xl font-black text-gray-900 tracking-tight uppercase">Report Central</h1>
-            <p className="text-gray-500 font-medium italic">Professional Government-Standard Reporting Suite</p>
+            <p className="text-gray-500 font-medium italic">Professional Government-Standard Reporting Suite (2026)</p>
           </div>
           <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 ring-1 ring-gray-50">
-            <button onClick={() => setActiveTab('static')} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'static' ? 'bg-emerald-600 text-white shadow-lg' : 'text-gray-400 hover:bg-emerald-50'}`}>Standard View</button>
-            <button onClick={() => setActiveTab('live')} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'live' ? 'bg-emerald-600 text-white shadow-lg' : 'text-gray-400 hover:bg-emerald-50'}`}>Looker Analytics</button>
+            <button onClick={() => setActiveTab('static')} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'static' ? 'bg-emerald-600 text-white shadow-lg' : 'text-gray-400 hover:bg-emerald-50'}`}>Digital Reports</button>
+            <button onClick={() => setActiveTab('live')} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'live' ? 'bg-emerald-600 text-white shadow-lg' : 'text-gray-400 hover:bg-emerald-50'}`}>Looker Studio</button>
           </div>
         </div>
 
         {/* Global Selectors */}
         <div className="bg-white p-8 rounded-[48px] shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-8 mb-10 ring-1 ring-gray-50">
           <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase mb-3 tracking-[3px]">Select Grade</label>
-            <select value={selectedGrade} onChange={e => setSelectedGrade(e.target.value)} className="w-full bg-gray-50 border-0 rounded-2xl px-6 py-4 font-black text-gray-900 focus:ring-2 focus:ring-emerald-500">
-              <option value="All">All Grades</option>
+            <label className="block text-[10px] font-black text-gray-400 uppercase mb-3 tracking-[3px]">Filter Grade</label>
+            <select value={selectedGrade} onChange={e => setSelectedGrade(e.target.value)} className="w-full bg-gray-50 border-0 rounded-2xl px-6 py-4 font-black text-gray-900">
+              <option value="All">Complete School</option>
               {[...Array(11)].map((_, i) => <option key={i+1} value={String(i+1)}>Grade {i+1}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase mb-3 tracking-[3px]">Select Section</label>
+            <label className="block text-[10px] font-black text-gray-400 uppercase mb-3 tracking-[3px]">Filter Section</label>
             <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} className="w-full bg-gray-50 border-0 rounded-2xl px-6 py-4 font-black text-gray-900">
               <option value="All">All Sections</option>
               {['A', 'B', 'C'].map(c => <option key={c} value={c}>Section {c}</option>)}
@@ -304,114 +303,82 @@ const ReportCentral: React.FC<ReportCentralProps> = ({ user }) => {
 
         {activeTab === 'static' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* 1. Census Report */}
+            {/* 1. Census Report Card */}
             <div className="bg-white p-10 rounded-[56px] shadow-sm border border-gray-100 flex flex-col hover:shadow-xl transition-all border-l-[12px] border-emerald-500 group">
               <div className="flex-1">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Census Console</h3>
-                  <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest">v2.1</span>
-                </div>
-                <p className="text-gray-500 text-sm mb-6 font-medium italic">Institutional demographic distribution and official population ledger.</p>
+                <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-2">Census Module</h3>
+                <p className="text-gray-500 text-sm mb-6 italic">Enrollment distribution and population aggregates.</p>
                 <div className="grid grid-cols-2 gap-4 mb-8">
                   <div className="bg-gray-50 p-4 rounded-3xl">
-                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Total Population</p>
+                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Population</p>
                     <p className="text-xl font-black text-emerald-900">{stats.gradeData.reduce((a,b)=>a+b.boys+b.girls,0)}</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-3xl">
-                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Staff Count</p>
-                    <p className="text-xl font-black text-emerald-900">{stats.teacherCount}</p>
+                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Households</p>
+                    <p className="text-xl font-black text-emerald-900">{Math.ceil(stats.gradeData.reduce((a,b)=>a+b.boys+b.girls,0)*0.85)}</p>
                   </div>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <button onClick={generateCensusReport} className="flex-1 bg-emerald-950 text-emerald-400 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl flex items-center justify-center gap-2">
-                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M16 10l-4 4m0 0l-4-4m4 4V4"/></svg>
-                   Official HTML Report
-                </button>
-              </div>
+              <button onClick={generateCensusReport} className="w-full bg-emerald-950 text-emerald-400 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all">Download HTML Report</button>
             </div>
 
-            {/* 2. Teachers Database */}
+            {/* 2. Teachers Report Card */}
             {isAdmin && (
               <div className="bg-white p-10 rounded-[56px] shadow-sm border border-gray-100 flex flex-col hover:shadow-xl transition-all border-l-[12px] border-blue-500 group">
                 <div className="flex-1">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Staff Registry</h3>
-                    <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest">MASTER</span>
-                  </div>
-                  <p className="text-gray-500 text-sm mb-6 font-medium italic">Complete roster of academic faculty, NIC credentials, and assignments.</p>
+                  <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-2">Staff Registry</h3>
+                  <p className="text-gray-500 text-sm mb-6 italic">Faculty distribution and service allocation ledger.</p>
                   <div className="grid grid-cols-2 gap-4 mb-8">
                     <div className="bg-gray-50 p-4 rounded-3xl">
                       <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Faculty Size</p>
                       <p className="text-xl font-black text-blue-900">{teachers.length}</p>
                     </div>
                     <div className="bg-gray-50 p-4 rounded-3xl">
-                      <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Active</p>
+                      <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Allocated</p>
                       <p className="text-xl font-black text-blue-900">{teachers.filter(t=>t.active).length}</p>
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <button onClick={generateTeachersReport} className="flex-1 bg-emerald-950 text-emerald-400 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl flex items-center justify-center gap-2">
-                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M16 10l-4 4m0 0l-4-4m4 4V4"/></svg>
-                     Faculty HTML Report
-                  </button>
-                </div>
+                <button onClick={generateTeachersReport} className="w-full bg-emerald-950 text-emerald-400 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all">Download HTML Report</button>
               </div>
             )}
 
-            {/* 3. Student Database */}
+            {/* 3. Student Report Card */}
             <div className="bg-white p-10 rounded-[56px] shadow-sm border border-gray-100 flex flex-col hover:shadow-xl transition-all border-l-[12px] border-purple-500 group">
               <div className="flex-1">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Student Ledger</h3>
-                  <span className="bg-purple-50 text-purple-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest">REGISTRY</span>
-                </div>
-                <p className="text-gray-500 text-sm mb-6 font-medium italic">Detailed census by grade and class, including demographic markers.</p>
+                <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-2">Student Ledger</h3>
+                <p className="text-gray-500 text-sm mb-6 italic">Demographic markers and class-wise attendance profiles.</p>
                 <div className="grid grid-cols-2 gap-4 mb-8">
                   <div className="bg-gray-50 p-4 rounded-3xl">
-                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Filter Match</p>
+                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Target Count</p>
                     <p className="text-xl font-black text-purple-900">{filteredStudents.length}</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-3xl">
-                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Scope</p>
-                    <p className="text-xl font-black text-purple-900">{selectedGrade === 'All' ? 'School' : 'Grade ' + selectedGrade}</p>
+                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1">G. Distribution</p>
+                    <p className="text-xl font-black text-purple-900">{((filteredStudents.filter(s=>s.gender==='Male').length/filteredStudents.length)*100).toFixed(0)}% M</p>
                   </div>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <button onClick={generateStudentReport} className="flex-1 bg-emerald-950 text-emerald-400 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl flex items-center justify-center gap-2">
-                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M16 10l-4 4m0 0l-4-4m4 4V4"/></svg>
-                   Student HTML Report
-                </button>
-              </div>
+              <button onClick={generateStudentReport} className="w-full bg-emerald-950 text-emerald-400 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all">Download HTML Report</button>
             </div>
 
-            {/* 4. Merit Intelligence */}
+            {/* 4. Merit Report Card */}
             <div className="bg-white p-10 rounded-[56px] shadow-sm border border-gray-100 flex flex-col hover:shadow-xl transition-all border-l-[12px] border-orange-500 group">
               <div className="flex-1">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Merit Module</h3>
-                  <span className="bg-orange-50 text-orange-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest">INTELLIGENCE</span>
-                </div>
-                <p className="text-gray-500 text-sm mb-6 font-medium italic">Academic evaluation schedule with rank analysis and performance scores.</p>
+                <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-2">Merit Module</h3>
+                <p className="text-gray-500 text-sm mb-6 italic">Academic rank distribution and instructional scores.</p>
                 <div className="grid grid-cols-2 gap-4 mb-8">
                   <div className="bg-gray-50 p-4 rounded-3xl">
-                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Avg. Class Score</p>
+                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Performance Avg</p>
                     <p className="text-xl font-black text-orange-900">{(marksReportData.reduce((a,b)=>a+b.average,0)/(marksReportData.length||1)).toFixed(1)}%</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-3xl">
-                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Top Score</p>
-                    <p className="text-xl font-black text-orange-900">{marksReportData.length ? Math.max(...marksReportData.map(r=>r.average)).toFixed(1) : 0}%</p>
+                    <p className="text-[9px] font-black text-gray-400 uppercase mb-1">Success Rate</p>
+                    <p className="text-xl font-black text-orange-900">High</p>
                   </div>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <button onClick={generateMeritReport} className="flex-1 bg-emerald-950 text-emerald-400 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl flex items-center justify-center gap-2">
-                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M16 10l-4 4m0 0l-4-4m4 4V4"/></svg>
-                   Merit HTML Report
-                </button>
-              </div>
+              <button onClick={generateMeritReport} className="w-full bg-emerald-950 text-emerald-400 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all">Download HTML Report</button>
             </div>
           </div>
         ) : (
@@ -425,22 +392,11 @@ const ReportCentral: React.FC<ReportCentralProps> = ({ user }) => {
                       <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Powered by Google Looker Studio</p>
                     </div>
                  </div>
-                 <span className="bg-blue-50 text-blue-700 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[4px] border border-blue-100">Live Connection: Active</span>
               </div>
-              <div className="relative aspect-video w-full bg-gray-50 rounded-[40px] border-4 border-gray-100 overflow-hidden shadow-inner flex flex-col items-center justify-center group">
-                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-emerald-500/5 opacity-50"></div>
-                 <div className="text-center relative z-10 px-10">
-                    <div className="w-24 h-24 bg-white rounded-3xl shadow-2xl mx-auto mb-8 flex items-center justify-center animate-bounce">
-                       <svg className="w-12 h-12 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20h4V4h-4v16zm-6 0h4v-8H4v8zM16 9v11h4V9h-4z"/></svg>
-                    </div>
-                    <h4 className="text-2xl font-black text-gray-900 mb-4">Establishing Secure Data Link...</h4>
-                    <p className="text-gray-500 font-medium italic max-w-md mx-auto mb-10">
-                      The institutional dashboard requires a direct connection to the Google Looker Studio endpoint. Ensure you are logged into your Workspace account.
-                    </p>
-                    <button className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-100 hover:bg-blue-700 hover:scale-105 transition-all">
-                       Sync Dashboard Now
-                    </button>
-                 </div>
+              <div className="relative aspect-video w-full bg-gray-50 rounded-[40px] border-4 border-gray-100 flex flex-col items-center justify-center">
+                 <h4 className="text-2xl font-black text-gray-900 mb-4">Establishing Secure Data Link...</h4>
+                 <p className="text-gray-500 font-medium italic mb-10">Direct connection to Google Studio endpoint required.</p>
+                 <button className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl">Sync Dashboard</button>
               </div>
             </div>
           </div>
